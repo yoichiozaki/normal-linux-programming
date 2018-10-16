@@ -110,3 +110,53 @@ if (close(fd) < 0) {
 }
 ```
 
+## ファイルオフセット
+ストリームはファイルに対して、「ファイルオフセットの位置に繋がっている」と言える。なぜなら、同一のファイルディスクリプタで特定されるストリームに対して何度も`read`を呼ぶと、必ず前回の呼び出しの続きが帰ってくる。
+
+
+### `lseek`
+`lseek`はファイルオフセットの位置を変えるシステムコール。
+
+```c
+#include <sys/types.h>
+#include <unistd.h>
+
+off_t lseek(int fd, off_t offset, int whence);
+```
+
+### `dup`/`dup2`
+ファイルディスクリプタの複製を行うシステムコール。
+
+```c
+#include <unistd.h>
+
+int dup(int oldfc);
+int dup2(int oldfd, int newfd);
+```
+
+### `ioctl`
+ストリームで繋がるデバイスに特化した操作を全て含むシステムコール。要するに`read`/`write`/`open`/`close`以外に必要なシステムコールをまとめたもの。しわ寄せ。
+
+```c
+#include <unistd.h>
+// unistd stands for UNIx STanDard.
+
+int ioctl(int fd, unsign long request, ...);
+```
+
+可変長引数をとる。
+`request`で操作を定数で指定する。定数は`sys/ioctl.h`に定義されている。
+
+### `fcntl`
+ファイルディスクリプタ関連の操作を`ioctl`から分離しようとした。
+
+```c
+#include <unistd.h>
+#include <fcntl.h>
+
+int fcntl(inf fd, int cmd, ...);
+```
+
+要するにファイルディスクリプタに対する操作をこの関数で一手に引き受けようとした。操作内容は`cmd`で指定する。
+
+`fcntl(fd, F_DUPFD)` == `dup(fd)`ということ。
