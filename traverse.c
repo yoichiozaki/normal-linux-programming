@@ -95,7 +95,6 @@ traverse_function(struct strbuf *pathbuf, int first)
             continue;
         }
 
-
         strbuf_realloc(pathbuf, pathbuf->len + 1 + strlen(ent->d_name) + 1);
         if (strcmp(pathbuf->ptr, "/")!= 0) {
             strcat(pathbuf->ptr, "/");
@@ -143,13 +142,18 @@ strbuf_new(void)
     return buf;
 }
 
+// bufで指し示されるstrbuf構造体のptrの指し示すバッファの大きさをlenに拡張するヘルパー関数
 static void
 strbuf_realloc(struct strbuf *buf, size_t len)
 {
     char *tmp;
+
+    // 拡張する前から十分に大きかったので何もしない
     if (buf->len > len) {
         return;
     }
+
+    // reallocで拡張
     tmp = realloc(buf->ptr, len);
     if (!tmp) {
         print_error("realloc(3)");
