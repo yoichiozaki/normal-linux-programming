@@ -18,12 +18,14 @@
 #define LINE_BUF_SIZE 4096
 #define MAX_REQUEST_BODY_LENGTH (1024 * 1024)
 
+// HTTPヘッダを表現する構造体
 struct HTTPHeaderField {
     char *name;
     char *value;
     struct HTTPHeaderField *next;
 };
 
+// HTTPリクエストを表現する構造体
 struct HTTPRequest {
     int protocol_minor_version;
     char *method;
@@ -33,35 +35,77 @@ struct HTTPRequest {
     long length;
 };
 
+// ファイルの情報を保持する構造体
 struct FileInfo {
     char *path;
     long size;
     int ok;
 };
 
+// シグナルハンドラ
 typedef void (*sighandler_t)(int);
+
+// シグナルハンドラの登録をする関数
 static void install_signal_handlers(void);
+
+// 特定のシグナルを捕捉するハンドラを定義する関数
 static void trap_signal(int sig, sighandler_t handler);
+
+// シグナルを表示して強制終了するヘルパー関数
 static void signal_exit(int sig);
-static void service(FILE *f, FILE *out, char *docroot);
-static struct HTTPRequest* read_request(FILE *f);
+
+// docrootを頂点とするディレクトリツリーに対してinからのリクエストを読み込んでレスポンスを生成しoutに出力する関数
+static void service(FILE *in, FILE *out, char *docroot);
+
+// inからやってくるリクエストを読み込んで、適切にHTTPRequest構造体インスタンスを構築しそれへのポインタを返す関数
+static struct HTTPRequest* read_request(FILE *in);
+
+// inからのストリームを解析し、引数reqの指し示す先に適切に格納するread_requestのヘルパー関数
 static void read_request_line(struct HTTPRequest *req, FILE *in);
+
+// inからやってくるストリームを読み込んで、適切にHTTPHeaderField構造体インスタンスを構築しそれへのポインタを返す関数
 static struct HTTPHeaderField* read_header_field(FILE *in);
+
+// strの指し示す先に格納されている文字列を大文字にするヘルパー関数
 static void upcase(char *str);
+
+// 引数reqの指し示す先のHTTPRequest構造体インスタンスをメモリから解放する関数
 static void free_request(struct HTTPRequest *req);
+
+// 引数reqの指し示す先のHTTPRequest構造体インスタンスのContent-Lengthを返す関数
 static long content_length(struct HTTPRequest *req);
+
+// 引数reqの指し示す先のHTTPRequest構造体インスタンスのヘッダーからnameの指し示す先に格納されているフィールドの文字列を返す関数
 static char* lookup_header_field_value(struct HTTPRequest *req, char *name);
+
+// 引数reqの指し示す先のHTTPRequest構造体インスタンスとdocrootを元にレスポンスを生成しoutに投げる関数
 static void respond_to(struct HTTPRequest *req, FILE *out, char *docroot);
+
+// respond_toのヘルパー関数
 static void do_file_response(struct HTTPRequest *req, FILE *out, char *docroot);
 static void method_not_allowed(struct HTTPRequest *req, FILE *out);
 static void not_implemented(struct HTTPRequest *req, FILE *out);
 static void not_found(struct HTTPRequest *req, FILE *out);
+
+// ヘッダーフィールドの雛形を出力するヘルパー関数
 static void output_common_header_fields(struct HTTPRequest *req, FILE *out, char *status);
+
+// docrotを頂点とするディレクトリツリーにおいてpathによって特定されるファイルについてのFleInfo構造体を構築しそれへのポインタを返す関数
 static struct FileInfo* get_fileinfo(char *docroot, char *path);
+
+// docrootを頂点とするディレクトリツリーにおいてpathで特定されるファイルの、システム上のフルパスを意味する文字列を構築し返すヘルパー関数
 static char* build_fspath(char *docroot, char *path);
+
+// infoで指し示されるFileInfo構造体インスタンスを解放するヘルパー関数
 static void free_fileinfo(struct FileInfo *info);
+
+// infoで指し示されるFileInfo構造体インスタンスを元に、そのファイルのコンテンツの種別を返すヘルパー関数
 static char* guess_content_type(struct FileInfo *info);
+
+// メモリ割り当ての成否を確認することを含めたmalloc
 static void* checked_malloc(size_t sz);
+
+// メッセージを出力するとともに強制終了するヘルパー関数
 static void log_exit(char *fmt, ...);
 
 int
